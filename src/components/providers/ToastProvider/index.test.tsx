@@ -48,3 +48,12 @@ test('Failed', () => {
   render(<ToastProvider defaultState={state}>{null}</ToastProvider>);
   expect(screen.getByRole('alert')).toHaveTextContent(state.message);
 });
+
+test.each([
+  { isShown: true, message: "成功しました", style: "succeed" },
+  { isShown: true, message: "失敗しました", style: "failed" },
+  { isShown: true, message: "通信中…", style: "busy" },
+] as ToastState[])('$message', (state) => {
+  render(<ToastProvider defaultState={state}>{null}</ToastProvider>);
+  expect(screen.getByRole('alert')).toHaveTextContent(state.message);
+});
