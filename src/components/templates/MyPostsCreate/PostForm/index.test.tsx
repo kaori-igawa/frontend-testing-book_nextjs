@@ -1,3 +1,5 @@
+import { mockUploadImage } from "@/services/client/UploadImage/__mock__/jest";
+import { selectImageFile, setupMockServer } from "@/tests/jest";
 import { render,screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PostForm } from './';
@@ -37,3 +39,31 @@ function setUp() {
     onInvalid,
   }
 }
+
+test('不適正内容で「下書き保存」を試みると、バリデーションエラーが表示される', async () => {
+  const { saveAsDraft } = setUp();
+  await saveAsDraft();
+  await waitFor(() => {
+    expect(screen.getByRole('textbox', { name: '記事タイトル'})).toHaveErrorMessage('1文字以上入力してください')
+  });
+});
+
+test('不適正内容で「下書き保存」を試みると、onInvalid イベントハンドラーが実行される', async ()=> {
+  const { saveAsDraft, onClickSave, onValid, onInvalid } = setUp();
+  await saveAsDraft();
+  expect(onClickSave).toHaveBeenCalled();
+  expect(onValid).not.toHaveBeenCalled();
+  expect(onInvalid).toHaveBeenCalled();
+});
+
+test('適正内容で「下書き保存」を試みると、onValid イベントハンドラーが実行される', async () => {
+  mockUploadImage();
+  const { typeTitle, saveAsDraft, onClickSave, onValid, onInvalid } = setUp();
+  const { selectImage } = selectImageFile();
+  await typeTitle('私の技術記事');
+  await selectImage();
+  await saveAsDraft();
+  expect(onClickSave).toHaveBeenCalled();
+  expect(onValid).toHaveBeenCalled();
+  expect(onInvalid).not.toHaveBeenCalled();
+})
