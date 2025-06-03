@@ -28,7 +28,7 @@ export async function setup() {
   }
 
   async function saveAsDraft() {
-    await user.click(screen.getByRole('button', { name: '下書きを保存する'}));
+    await user.click(screen.getByRole('button', { name: '下書き保存する'}));
   }
 
   async function clickButton(name: 'はい' | 'いいえ') {
@@ -115,6 +115,28 @@ describe('Toast', () => {
     await clickButton('はい');
     await waitFor(
       () => expect(screen.getByRole('alert')).toHaveTextContent('公開に失敗しました')
+    );
+  });
+});
+
+describe('画面遷移', () => {
+  test('下書き保存した場合、下書きした記事ページに遷移する', async () => {
+    const { typeTitle, saveAsDraft, selectImage } = await setup();
+    await typeTitle('201');
+    await selectImage();
+    await saveAsDraft();
+    await waitFor(() =>
+      expect(mockRouter).toMatchObject({ pathname: '/my/posts/201' })
+    );
+  });
+  test('公開に成功した場合、画面遷移する', async () => {
+    const { typeTitle, saveAsPublished, clickButton, selectImage } = await setup();
+    await typeTitle('201');
+    await selectImage();
+    await saveAsPublished();
+    await clickButton('はい');
+    await waitFor(() =>
+      expect(mockRouter).toMatchObject({ pathname: '/my/posts/201' })
     );
   });
 });
