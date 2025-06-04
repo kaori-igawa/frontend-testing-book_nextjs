@@ -20,6 +20,13 @@ export const NotLoggedIn: Story = {
 
 export const LoggedIn: Story = {};
 
+export const SPNotLogIn: Story = {
+  parameters: {
+    ...SPStory.parameters,
+    ...NotLoggedIn.parameters,
+  }
+}
+
 export const SPLoggedIn: Story = {
   parameters: {
     ...SPStory.parameters,
