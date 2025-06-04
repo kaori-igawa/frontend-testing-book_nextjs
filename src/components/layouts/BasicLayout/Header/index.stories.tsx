@@ -20,6 +20,18 @@ export const NotLoggedIn: Story = {
 
 export const LoggedIn: Story = {};
 
+export const RouteMyPosts: Story = {
+  parameters: {
+    nextRouter: { pathname: '/my/posts' },
+  },
+};
+
+export const RouteMyPostsCreate: Story = {
+  parameters: {
+    nextRouter: { pathname: '/my/posts/create' },
+  },
+};
+
 export const SPNotLogIn: Story = {
   parameters: {
     ...SPStory.parameters,
