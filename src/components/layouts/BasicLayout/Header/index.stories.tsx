@@ -49,3 +49,17 @@ export const SPLoggedIn: Story = {
     await expect(navigation).not.toBeInTheDocument();
   }
 };
+
+export const SPLoggedInOpenMenu: Story = {
+  storyName: 'SPレイアウトでドロワーメニューを開ける',
+  parameters: {
+    ...SPStory.parameters,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const button = await canvas.findByRole('button', { name: 'メニューを開く'});
+    await user.click(button);
+    const navigation = canvas.getByRole('navigation', { name: 'ナビゲーション'});
+    await expect(navigation).toBeInTheDocument();
+  },
+};
