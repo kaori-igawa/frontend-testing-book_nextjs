@@ -3,6 +3,7 @@
     "workingDir": ".reg",
     "actualDir": "__screenshots__",
     "thresholdRate": 0.03,
+    "thresholdPixel": 50,
     "addIgnore": true,
     "ximgdiff": {
       "invocationType": "client"
