@@ -15,9 +15,6 @@
       "prComment": true,
       "prCommentBehavior": "default",
       "clientId": "$REG_NOTIFY_CLIENT_ID"
-    },
-    "reg-publish-s3-plugin": {
-      "bucketName": "$AWS_BUCKET_NAME"
     }
   }
 }
