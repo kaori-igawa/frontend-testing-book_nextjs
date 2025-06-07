@@ -1,0 +1,45 @@
+name: visual-regression-test
+on:
+  pull_request:
+    branches:
+      - develop
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  check_expected_screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: volta-cli/action@v4
+      - uses: actions/checkout@v3
+        with:
+          ref: develop
+          fetch-depth: 0
+      
+      # VRTを行ったキャッシュがあるかどうか調べる
+      - name: restore cached expected screenshots
+        id: screenshots_cache
+        uses: ./.github/actions/cache-screenshots
+        with:
+          lookup-only: 'true'
+
+      # node_modulesのキャッシュのあるかどうか調べて、なかったらinstallする
+      - name: restore cached node_modules
+        if: ${{ steps.screenshots_cache.outputs.cache-hit != 'true' }}
+        uses: ./.github/actions/cache-node-modules
+
+      # storybookのbuildデータのキャッシュがあるかどうか調べる
+      - name: cache storybook build result
+        if: ${{ steps.screenshots_cache.outputs.cache-hit != 'true' }}
+        id: storybook_result_cache
+        uses: ./.github/actions/cache-storybook-build-result
+
+      # VRTを行ったキャッシュもstorybookのbuildデータのキャッシュもなかったらstorybookをbuildする
+      - name: storybook build
+        if: ${{ steps.screenshots_cache.outputs.cache-hit != 'true' && steps.storybook_result_cache.outputs.cache-hit != 'true'}}
+        run: npm run storybook:build
+        env:
+          NEXT_IS_TEST: 'true'

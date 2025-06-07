@@ -1,0 +1,25 @@
+name: 'cache storybook build'
+description: 'cache storybook build result'
+outputs:
+  cache-hit:
+    description: 'storybook build cache hit result'
+    value: ${{ steps.storybook_build_result_id.outputs.cache-hit }}
+runs:
+  using: 'composite'
+  steps:
+    - name: get commit hash of current branch
+      id: get_hash
+      # 現在のコミットハッシュを取得し、hashという名前のアウトプットとして設定する
+      run: echo "hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+      shell: bash
+
+    # actions/cacheはkeyのキャッシュがあるかどうか調べる。
+    # あったらキャッシュを復元する。
+    # なかったらjob完了後にpathが存在したらキャッシュを保存する。
+    - uses: actions/cache@v3
+      id: storybook_build_result_id
+      env:
+        cache-name: cache-storybook_build_result
+      with:
+        path: storybook-static/
+        key: ${{ runner.os }}-storybook-static-${{ steps.get_hash.outputs.hash }}

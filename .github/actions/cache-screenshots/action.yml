@@ -1,0 +1,33 @@
+name: 'cache screenshots'
+description: 'cache screenshots'
+inputs:
+  lookup-only:
+    description: 'If true, only checks if cache entry exists and skips download.'
+    default: 'false'
+    required: false
+outputs:
+  cache-hit:
+    description: 'screenshots cache hit result'
+    value: ${{ steps.screenshots_cache_id.outputs.cache-hit }}
+runs:
+  # Composite Action
+  using: 'composite'
+  steps:
+    - name: get commit hash of current branch
+      id: get_hash
+      # 現在のコミットハッシュを取得し、hashという名前のアウトプットとして設定する
+      run: echo "hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+      shell: bash
+
+    # actions/cacheはkeyのキャッシュがあるかどうか調べる。
+    # あったらキャッシュを復元する。
+    # なかったらjob完了後にpathが存在したらキャッシュを保存する。
+    - uses: actions/cache@v3
+      id: screenshots_cache_id
+      env:
+        cache-name: cache_screenshots
+      with:
+        path: .reg/
+        key: ${{ runner.os }}-screenshots-${{ steps.get_hash.outputs.hash }}
+        # lookup-only: trueの場合はキャッシュがあるかどうか確認するだけ
+        lookup-only: ${{ inputs.lookup-only == 'true' }}

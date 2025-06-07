@@ -1,0 +1,21 @@
+name: 'cache node modules'
+description: 'cache node modules'
+runs:
+  using: 'composite'
+  steps:
+    # actions/cacheはkeyのキャッシュがあるかどうか調べる。
+    # あったらキャッシュを復元する。
+    # なかったらjob完了後にpathが存在したらキャッシュを保存する。
+    - uses: actions/cache@v3
+      id: node_modules_cache_id
+      env:
+        cache-name: cache-node-modules
+      with:
+        path: '**/node_modules'
+        # hashFilesは、指定されたファイル（ここではpackage-lock.json）の内容からハッシュ値（ユニークなID）を生成する関数
+        key: ${{ runner.os }}-nodejs-${{ hashFiles('**/package-lock.json') }}
+    - if: ${{ steps.node_modules_cache_id.outputs.cache-hit != 'true' }}
+      name: install node_modules
+      # npm ci ⇛ package-lock.jsonファイルを絶対に更新せず、書かれているバージョンを厳密にインストールする
+      run: npm ci
+      shell: bash
