@@ -8,6 +8,7 @@ defaults:
     shell: bash
 
 jobs:
+  # developブランチのscreenshotsを確認する
   check_expected_screenshots:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -41,5 +42,59 @@ jobs:
       - name: storybook build
         if: ${{ steps.screenshots_cache.outputs.cache-hit != 'true' && steps.storybook_result_cache.outputs.cache-hit != 'true'}}
         run: npm run storybook:build
+        # build scriptに渡す環境変数
         env:
           NEXT_IS_TEST: 'true'
+
+  # developブランチのscreenshotsを撮る
+  take_expected_screenshots:
+    needs: check_expected_screenshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # タスクを4つに分割し、並列で実行することで全体の実行時間を大幅に短縮
+    strategy:
+      matrix:
+        shard: [1/4, 2/4, 3/4, 4/4]
+    
+    steps:
+      - uses: volta-cli/action@v4
+      - uses: actions/checkout@v3
+        with:
+          ref: develop
+          fetch-depth: 0
+
+      # VRTを行ったキャッシュがあるかどうか調べる
+      - name: restore cached expected screenshots
+        id: screenshots_cache
+        uses: ./.github/actions/cache-screenshots
+        with:
+          lookup-only: 'false'
+
+      # node_modulesのキャッシュのあるかどうか調べて、なかったらinstallする
+      - name: restore cached node_modules
+        if: ${{ steps.screenshots_cache.outputs.cache-hit != 'true' }}
+        uses: ./.github/actions/cache-node-modules
+
+      # storybookのbuildデータのキャッシュがあるかどうか調べる
+      - name: cache storybook build result
+        if: ${{ steps.screenshots_cache.outputs.cache-hit != 'true' }}
+        id: storybook_result_cache
+        uses: ./.github/actions/cache-storybook-build-result
+
+      # screenshotsを撮る準備
+      - name: prepare for screenshots
+        if: ${{ steps.screenshots_cache.outputs.cache-hit != 'true' }}
+        uses: ./.github/actions/prepare-screenshots
+
+      # screenshotsを撮る
+      - name: take screenshots
+        if: ${{ steps.screenshots_cache.outputs.cache-hit != 'true' }}
+        run: npm run vrt:snapshot --shard=${{ matrix.shard }}
+
+      # artifactにscreenshotsをアップロードする
+      - name: upload screenshots
+        uses: actions/upload-artifact@v3
+        with:
+          name: expected-screenshots
+          path: __screenshots__
+          retention-days: 1
