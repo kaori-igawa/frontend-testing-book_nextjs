@@ -18,6 +18,7 @@ runs:
     # なかったらjob完了後にpathが存在したらキャッシュを保存する。
     - uses: actions/cache@v3
       id: storybook_build_result_id
+      # cache-name環境変数はデバッグ時のログを分かりやすくするための付加的な情報（メタデータ）
       env:
         cache-name: cache-storybook_build_result
       with:
