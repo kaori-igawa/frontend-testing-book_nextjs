@@ -13,7 +13,7 @@
     "reg-keygen-git-hash-plugin": true,
     "reg-notify-github-plugin": {
       "prComment": true,
-      "prCommentBehavior": "default",
+      "prCommentBehavior": "always",
       "useGitHubToken": true
     }
   }
