@@ -10,6 +10,11 @@
     }
   },
   "plugins": {
-    "reg-keygen-git-hash-plugin": true
+    "reg-keygen-git-hash-plugin": true,
+    "reg-notify-github-plugin": {
+      "prComment": true,
+      "prCommentBehavior": "default",
+      "useGitHubToken": true
+    }
   }
 }
