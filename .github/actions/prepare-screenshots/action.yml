@@ -3,8 +3,12 @@ description: 'prepare for screenshots'
 runs:
   using: 'composite'
   steps:
+    - name: Install Playwright System Dependencies
+      run: sudo apt-get update && sudo apt-get install -y libnss3 libxss1 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libgdk-pixbuf2.0-0 libgtk-3-0 libasound2t64 libgbm1
+      shell: bash
+
     - name: download chromium
-      run: npx playwright install --with-deps chromium
+      run: npx playwright install chromium
       shell: bash
 
     - name: install native dependencies
