@@ -91,7 +91,7 @@ jobs:
       # screenshotsを撮る
       - name: take screenshots
         if: ${{ steps.screenshots_cache.outputs.cache-hit != 'true' }}
-        run: npm run vrt:snapshot --shard=${{ matrix.shard }}
+        run: npm run vrt:snapshot -- --shard=${{ matrix.shard }}
 
       # artifactにscreenshotsをアップロードする
       - name: upload screenshots
@@ -192,7 +192,7 @@ jobs:
       # screenshotsを撮る
       - name: take screenshots
         if: ${{ steps.screenshots_cache.outputs.cache-hit != 'true' }}
-        run: npm run vrt:snapshot --shard=${{ matrix.shard }}
+        run: npm run vrt:snapshot -- --shard=${{ matrix.shard }}
 
       # artifactにscreenshotsをアップロードする
       - name: upload screenshots
