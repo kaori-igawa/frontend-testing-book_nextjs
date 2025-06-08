@@ -18,6 +18,8 @@ jobs:
       - uses: actions/checkout@v3
         with:
           ref: develop
+          # VRTで正確に比較するためにシャロークローンを無効化する
+          # シャロークローンは、--depth=<数値>オプションを付けて、最新のコミットから指定した数だけを取得する機能です。
           fetch-depth: 0
       
       # VRTを行ったキャッシュがあるかどうか調べる
@@ -157,7 +159,6 @@ jobs:
         with:
           fetch-depth: 0
 
-  
       # Detached HEAD状態を解消し、明確な名前を持つブランチに確実に切り替える
       - name: workaround for detached HEAD
         # ${GITHUB_HEAD_REF}は、プルリクエストの元ブランチの参照情報（例: refs/heads/feature/new-design）を格納している環境変数
@@ -200,3 +201,96 @@ jobs:
           name: actual-screenshots
           path: __screenshots__
           retention-days: 1
+
+
+  # VRTを行い、レポートをgithub pagesに公開する
+  run_reg_suit:
+    needs:
+      - take_expected_screenshots
+      - take_actual_screenshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: volta-cli/action@v4
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # VRTを行ったキャッシュがあるかどうか調べる
+      - name: restore cached expected screenshots
+        id: screenshots_cache
+        uses: ./.github/actions/cache-screenshots
+        with:
+          lookup-only: 'false'
+
+      # developブランチのスクリーンショットをartifactからダウンロードする
+      - name: download expected screenshots
+        if: ${{ steps.screenshots_cache.outputs.cache-hit != 'true' }}
+        uses: actions/download-artifact@v3
+        with:
+          name: expected-screenshots
+          path: __screenshots__
+
+      # ダウンロードしたdevelopブランチのスクリーンショットを.reg/expected/に移動する
+      - name: set reg-suit expected
+        if: ${{ steps.screenshots_cache.outputs.cache-hit != 'true' }}
+        run: |
+          rm -rf .reg/expected/
+          mkdir -p .reg/expected
+          mv -f __screenshots__/* .reg/expected
+          ls -l .reg/
+
+      # featureブランチのスクリーンショットをartifactからダウンロードする
+      - name: download actual screenshots
+        uses: actions/download-artifact@v3
+        with:
+          name: actual-screenshots
+          path: __screenshots__
+
+      # node-modulesのキャッシュがあるかどうか調べて、なければinstallする
+      - name: restore cached node_modules
+        if: ${{ steps.screenshots_cache.outputs.cache-hit != 'true' }}
+        uses: ./.github/actions/cache-node-modules
+
+      # Detached HEAD状態を解消し、明確な名前を持つブランチに確実に切り替える
+      - name: workaround for detached HEAD
+        # ${GITHUB_HEAD_REF}は、プルリクエストの元ブランチの参照情報（例: refs/heads/feature/new-design）を格納している環境変数
+        # #refs/heads/は、その文字列の先頭からrefs/heads/という部分を取り除くシェルの機能
+        run: |
+          git checkout ${GITHUB_HEAD_REF#refs/heads/} || git checkout -b ${GITHUB_HEAD_REF#refs/heads/} && git pull
+
+      # VRTを実行する
+      - name: run reg-suit
+        run: npm run vrt:run
+
+      # VRTのレポートをgithub pagesに公開する
+      - name: deploy report to github page
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .reg/
+          # 公開先のサブディレクトリを指定する。
+          # github.head_refはプルリクエストの元となっているブランチ名（例: feature/new-design）が自動的に入る。
+          destination_dir: ${{ github.head_ref }}
+
+      # プルリクエストにボットが投稿した過去のレポートコメントを探す
+      - name: find comment
+        uses: peter-evans/find-comment@v2
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: reg-suit report
+
+      # プルリクエスト内に見つけたコメントを更新するか、なければ新規にコメントを作成します。
+      - name: upsert comment
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            reg-suit report
+            https://kaori-igawa.github.io/frontend-testing-book_nextjs/${{github.head_ref}}
+          edit-mode: replace
+
