@@ -98,3 +98,45 @@ jobs:
           name: expected-screenshots
           path: __screenshots__
           retention-days: 1
+
+  # featureブランチのscreenshotsを確認する
+  check_actual_screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: volta-cli/action@v4
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # Detached HEAD状態を解消し、明確な名前を持つブランチに確実に切り替える
+      - name: workaround for detached HEAD
+        # ${GITHUB_HEAD_REF}は、プルリクエストの元ブランチの参照情報（例: refs/heads/feature/new-design）を格納している環境変数
+        # #refs/heads/は、その文字列の先頭からrefs/heads/という部分を取り除くシェルの機能
+        run: |
+          git checkout ${GITHUB_HEAD_REF#refs/heads/} || git checkout -b ${GITHUB_HEAD_REF#refs/heads/} && git pull
+
+      # VRTを行ったかどうか調べる
+      - name: restore cached actual screenshots
+        id: screenshots_cache
+        uses: ./.github/actions/cache-screenshots
+        with:
+          lookup-only: 'true'
+      
+      # node_modulesのキャッシュがあるかどうか調べる。なかったらinstallする
+      - name: restore cached node_modules
+        if: ${{ steps.screenshots_cache.outputs.cache-hit != 'true' }}
+        uses: ./.github/actions/cache-node-modules
+
+      # storybookのbuildデータのキャッシュがあるかどうか調べる
+      - name: cache storybook build result
+        if: ${{ steps.screenshots_cache.outputs.cache-hit != 'true' }}
+        id: storybook_result_cache
+        uses: ./.github/actions/cache-storybook-build-result
+
+      # VRTのキャッシュもstorybookのbuildデータキャッシュもなかったらstorybookをbuildする
+      - name: storybook build
+        if: ${{ steps.screenshots_cache.outputs.cache-hit != 'true' && steps.storybook_result_cache.outputs.cache-hit != 'true' }}
+        run: npm run storybook:build
+        env:
+          NEXT_IS_TEST: 'true'
