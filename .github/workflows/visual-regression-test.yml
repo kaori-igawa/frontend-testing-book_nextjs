@@ -97,8 +97,32 @@ jobs:
       - name: upload screenshots
         uses: actions/upload-artifact@v4
         with:
-          name: expected-screenshots
+          name: expected-screenshots-${{ strategy.job-index }}
           path: __screenshots__
+          retention-days: 1
+
+  # developブランチのartifactに分割してアップロードされているスクリーンショットをひとつにする
+  merge_expected_screenshots:
+    needs: take_expected_screenshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Download all sharded expected artifacts
+        uses: actions/download-artifact@v4
+        with:
+          # ワイルドカードで全てダウンロード
+          pattern: expected-screenshots-*
+          path: all_expected_screenshots/
+          # 1つのディレクトリにマージする
+          merge-multiple: true
+
+      - name: Upload merged expected artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # 最終的なアーティファクト名
+          name: expected-screenshots
+          path: all_expected_screenshots/
           retention-days: 1
 
   # featureブランチのscreenshotsを確認する
@@ -198,16 +222,40 @@ jobs:
       - name: upload screenshots
         uses: actions/upload-artifact@v4
         with:
-          name: actual-screenshots
+          name: actual-screenshots-${{ strategy.job-index }}
           path: __screenshots__
+          retention-days: 1
+
+  # featureブランチのartifactに分割してアップロードされているスクリーンショットをひとつにする
+  merge_actual_screenshots:
+    needs: take_actual_screenshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Download all sharded actual artifacts
+        uses: actions/download-artifact@v4
+        with:
+          # ワイルドカードで全てダウンロード
+          pattern: actual-screenshots-*
+          path: all_actual_screenshots/
+          # 1つのディレクトリにマージする
+          merge-multiple: true
+
+      - name: Upload merged actual artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # 最終的なアーティファクト名
+          name: actual-screenshots
+          path: all_actual_screenshots/
           retention-days: 1
 
 
   # VRTを行い、レポートをgithub pagesに公開する
   run_reg_suit:
     needs:
-      - take_expected_screenshots
-      - take_actual_screenshots
+      - merge_expected_screenshots
+      - merge_actual_screenshots
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
