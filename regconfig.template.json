@@ -14,7 +14,7 @@
     "reg-notify-github-plugin": {
       "clientId": "${REG_NOTIFY_CLIENT_ID}",
       "prComment": true,
-      "prCommentBehavior": "always"
+      "prCommentBehavior": "new"
     }
   }
 }
