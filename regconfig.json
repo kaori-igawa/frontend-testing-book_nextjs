@@ -12,9 +12,9 @@
   "plugins": {
     "reg-keygen-git-hash-plugin": true,
     "reg-notify-github-plugin": {
+      "clientId": "s7SwNDU0N7Qw0U8rys8rSc1L0S1JLS7JzEvXTcrPz47PS60oySrWNzcwMDEwM7PQz07ML8rUzUxPLE8EAA==",
       "prComment": true,
-      "prCommentBehavior": "always",
-      "useGitHubToken": true
+      "prCommentBehavior": "always"
     }
   }
 }
