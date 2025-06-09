@@ -308,6 +308,13 @@ jobs:
         run: |
           git checkout ${GITHUB_HEAD_REF#refs/heads/} || git checkout -b ${GITHUB_HEAD_REF#refs/heads/} && git pull
 
+      # regconfig.template.jsonを元にGitHub Actions secretsから環境変数を渡してregconfig.jsonを生成する
+      - name: Generate regconfig.json
+        run: |
+          envsubst < regconfig.template.json > regconfig.json
+        env:
+          REG_NOTIFY_CLIENT_ID: ${{ secrets.REG_NOTIFY_CLIENT_ID }}
+
       # VRTを実行する
       - name: run reg-suit
         run: npm run vrt:run
