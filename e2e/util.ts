@@ -33,3 +33,18 @@ export async function logout({
   await loginUser.hover();
   await page.getByText('ログアウト').click();
 }
+
+export async function assertUnauthorizedRedirect({
+  page,
+  path,
+}: {
+  page: Page;
+  path: string;
+}) {
+  // 指定のページに直アクセス
+  await page.goto(url(path));
+  // リダイレクトを待つ
+  await page.waitForURL(url('/login'));
+  // ログインページであることを確認
+  await expect(page).toHaveTitle('ログイン | Tech Posts');
+}
